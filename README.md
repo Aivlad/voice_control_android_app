@@ -1,4 +1,4 @@
-№ Final project for the course "Artificial Intelligence"
+# Final project for the course "Artificial Intelligence"
 Moments (criteria):
 * Android app (Java app)
 * Voice control
