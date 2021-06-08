@@ -1,20 +1,12 @@
 package com.arhiser.todolist.screens.main;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.media.AudioAttributes;
-import android.media.AudioManager;
-import android.media.SoundPool;
-import android.os.Build;
-import android.os.Bundle;
-
-import com.arhiser.todolist.R;
-import com.arhiser.todolist.model.Note;
-import com.arhiser.todolist.screens.details.NoteDetailsActivity;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-
 import android.content.Intent;
+import android.media.SoundPool;
+import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
+import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,12 +17,11 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.speech.RecognizerIntent;
-import android.speech.tts.TextToSpeech;
-import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
+import com.arhiser.todolist.App;
+import com.arhiser.todolist.R;
+import com.arhiser.todolist.model.Note;
+import com.arhiser.todolist.screens.details.NoteDetailsActivity;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +33,11 @@ public class MainActivity extends AppCompatActivity {
 
     private TextToSpeech textToSpeech;
     private SoundPool sounds;
+
+    private final static int RS_CODE_CLICK_MICROPHONE = 10;
+    private final static int RS_CODE_INDEX_DEFINITION = 11;
+    private final static int RS_CODE_VOICE_NOTE = 12;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,13 +94,35 @@ public class MainActivity extends AppCompatActivity {
      * Нажатие кнопки "Микрофон"
      * */
     public void onClickMicrophone(View view) {
+        localRecognizeSpeech(RS_CODE_CLICK_MICROPHONE);
+    }
+
+    /**
+     * Определение индекса
+     * */
+    private void indexDefinition() {
+        localRecognizeSpeech(RS_CODE_INDEX_DEFINITION);
+    }
+
+    /**
+     * Голосовая заметка
+     * */
+    private void voiceNote() {
+        localRecognizeSpeech(RS_CODE_VOICE_NOTE);
+    }
+
+    /**
+     * Определение Recognize Speech вынесено в отдельный метод
+     * */
+    public void localRecognizeSpeech(int requestCode) {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);   // создаем сообщение к системе, в котором указываем, что хотим запустить
         // RECOGNIZE SPEECH (распознование голоса)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);  // определяем настройку модели языка, которая будет иметь FREE FORM
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());  // настраиваем язык: getDefault - приявязка к языку смартфона (тот, который по дефолту на смартфоне)
-        startActivityForResult(intent, 10); // отправка сообщения и определяем ожидание результата с кодом 10 (случайное число, можно указать любое)
-                                                        // теперь сообщение будет привязано к указанному коду
+        startActivityForResult(intent, requestCode); // отправка сообщения и определяем ожидание результата с кодом requestCode (случайное число, можно указать любое)
+                                                     // теперь сообщение будет привязано к указанному коду
     }
+
 
     // onActivityResult - функция, которая ждет результата activity
     @Override
@@ -113,10 +131,19 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println(requestCode);
         if (resultCode == RESULT_OK && data != null) { // RESULT_OK - все произошло хорошо, data != null - данные не пустые
+            ArrayList<String> text = null;
             switch (requestCode) {
-                case 10:
-                    ArrayList<String> text = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);  // берем все данные, которые пришли
+                case RS_CODE_CLICK_MICROPHONE:
+                    text = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);  // берем все данные, которые пришли
                     textCommand(text.get(0));
+                    break;
+                case RS_CODE_INDEX_DEFINITION:
+                    text = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);  // берем все данные, которые пришли
+                    textCommandAddition(text.get(0));
+                    break;
+                case RS_CODE_VOICE_NOTE:
+                    text = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);  // берем все данные, которые пришли
+                    saveNote(text.get(0));
                     break;
             }
         }
@@ -133,12 +160,93 @@ public class MainActivity extends AppCompatActivity {
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
     }
 
+    private void saveNote(String content) {
+        Note newNote = new Note();
+        newNote.text = content;
+        newNote.done = false;
+        newNote.timestamp = System.currentTimeMillis();
+        App.getInstance().getNoteDao().insert(newNote);
+
+        callToast("Заметка под запись создана");
+    }
+
+    /**
+     * Дополнительная текстовая команда (определить номер элемента)
+     * */
+    private View textCommandAddition(String command) {
+        command = command
+                .replaceAll("один", "1")
+                .replaceAll("два", "2")
+                .replaceAll("три", "3")
+                .replaceAll("четыре", "4")
+                .replaceAll("пять", "5")
+                .replaceAll("шесть", "6")
+                .replaceAll("семь", "7")
+                .replaceAll("восемь", "8")
+                .replaceAll("девять", "9")
+                .replaceAll("ноль", "0")
+                .replaceAll(" ", "");
+
+        int index;
+        try {
+            index = Integer.parseInt(command);
+            index--;
+        }
+        catch (NumberFormatException e) {
+            callToast("Номер не распознан");
+            return null;
+        }
+
+        if (index < 0 || index >= recyclerView.getAdapter().getItemCount()) {
+            callToast("Такого номера нет");
+            return null;
+        }
+        return recyclerView.findViewHolderForAdapterPosition(index).itemView;
+    }
+
+
     /**
      * Исполнение текстовых команд
      * */
     private void textCommand(String command) {
-        callToast(command);
-//        switch (command.toLowerCase()) {
+        switch (command.toLowerCase().trim()) {
+            case "создать заметку":
+                callToast("Ручное создание заметки");
+                NoteDetailsActivity.start(MainActivity.this, null);
+                break;
+            case "слушать":
+                voiceNote();
+                break;
+            default:
+                if (command.startsWith("найти")) {
+                    View answer = textCommandAddition(command.substring("найти".length() + 1));
+                    if (answer != null) {
+                        callToast("Ручное обновление заметки");
+                        answer.performClick();
+                    }
+                }
+                else if (command.startsWith("выполнить")) {
+                    String number = command.substring("выполнить".length() + 1);
+                    View answer = textCommandAddition(number);
+                    if (answer != null) {
+                        callToast(String.format("Заметка %s выполнена", number));
+                        answer.findViewById(R.id.completed).performClick();
+                    }
+                }
+                else if (command.startsWith("удалить")) {
+                    String number = command.substring("удалить".length() + 1);
+                    View answer = textCommandAddition(number);
+                    if (answer != null) {
+                        callToast(String.format("Заметка %s удалена", number));
+                        answer.findViewById(R.id.delete).performClick();
+                    }
+                }
+                else
+                    callToast("Команда не определена");
+        }
+
+        //region Fragment of meaningless commands
+        //        switch (command.toLowerCase()) {
 //            case "яблоко":
 //                imMain.setImageResource(R.drawable.apple);
 //                break;
@@ -169,10 +277,12 @@ public class MainActivity extends AppCompatActivity {
 //                textToSpeech.speak("Моя твоя не понимать",
 //                        TextToSpeech.QUEUE_FLUSH, null);
 //        }
+        //endregion
     }
 
 
-//    // звук
+    //region Sound setting (for connecting external tracks)
+    //    // звук
 //    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 //    protected  void createNewSoundPool() {
 //        AudioAttributes attributes = new AudioAttributes.Builder()
@@ -198,4 +308,5 @@ public class MainActivity extends AppCompatActivity {
 //            createOldSoundPool();
 //        }
 //    }
+    //endregion
 }

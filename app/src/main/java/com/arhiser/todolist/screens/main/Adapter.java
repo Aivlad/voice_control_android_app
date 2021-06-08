@@ -25,7 +25,6 @@ public class Adapter extends RecyclerView.Adapter<Adapter.NoteViewHolder> {
     private SortedList<Note> sortedList;
 
     public Adapter() {
-
         sortedList = new SortedList<>(Note.class, new SortedList.Callback<Note>() {
             @Override
             public int compare(Note o1, Note o2) {
@@ -89,6 +88,10 @@ public class Adapter extends RecyclerView.Adapter<Adapter.NoteViewHolder> {
 
     public void setItems(List<Note> notes) {
         sortedList.replaceAll(notes);
+    }
+
+    public void myTest(int index) {
+        sortedList.get(index).done = false;
     }
 
     static class NoteViewHolder extends RecyclerView.ViewHolder {
