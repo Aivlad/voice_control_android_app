@@ -38,7 +38,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView recyclerView;
+    private RecyclerView recyclerView;  // переменная для списка
 
     private TextToSpeech textToSpeech;
     private SoundPool sounds;
@@ -50,10 +50,10 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        recyclerView = findViewById(R.id.list);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
-        recyclerView.setLayoutManager(linearLayoutManager);
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+        recyclerView = findViewById(R.id.list); // привязка к объекту
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);  // определяем размещение внутри списка
+        recyclerView.setLayoutManager(linearLayoutManager); // вешаем менеджер
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));    // добавляем разделители м-ду эл-тами
 
         final Adapter adapter = new Adapter();
         recyclerView.setAdapter(adapter);

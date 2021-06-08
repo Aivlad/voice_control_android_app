@@ -16,36 +16,40 @@ import com.arhiser.todolist.App;
 import com.arhiser.todolist.R;
 import com.arhiser.todolist.model.Note;
 
+// NoteDetailsActivity - активити для редактирования и создания заметки
 public class NoteDetailsActivity extends AppCompatActivity {
 
-    private static final String EXTRA_NOTE = "NoteDetailsActivity.EXTRA_NOTE";
+    private static final String EXTRA_NOTE = "NoteDetailsActivity.EXTRA_NOTE"; // ключ для передачи заметки ч-з bundle
 
-    private Note note;
+    private Note note; // текущая заметка
 
-    private EditText editText;
+    private EditText editText;  // текстовое поле ввода
 
+    /**
+     * Вызов одного активити из другого в обертке ввиде ф-ции
+     * */
     public static void start(Activity caller, Note note) {
-        Intent intent = new Intent(caller, NoteDetailsActivity.class);
+        Intent intent = new Intent(caller, NoteDetailsActivity.class);  // 1-источник, 2-класс вызова
         if (note != null) {
-            intent.putExtra(EXTRA_NOTE, note);
+            intent.putExtra(EXTRA_NOTE, note); // прикрепляем note к нашему intent
         }
-        caller.startActivity(intent);
+        caller.startActivity(intent); // запуск активити
     }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_note_details);
+        setContentView(R.layout.activity_note_details); // приложение читает файл разметки и создает уже конкретные классы
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        setSupportActionBar(toolbar);   // задаем Toolbar в качестве ActionBar
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);  // кнопка назад
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        setTitle(getString(R.string.note_details_title));
+        setTitle(getString(R.string.note_details_title));   // задаем текст заголовка
 
-        editText = findViewById(R.id.text);
+        editText = findViewById(R.id.text); // достаем editText
 
         if (getIntent().hasExtra(EXTRA_NOTE)) {
             note = getIntent().getParcelableExtra(EXTRA_NOTE);
@@ -55,12 +59,18 @@ public class NoteDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Ф-ция создания меню
+     * */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_details, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
+    /**
+     * Обработка событий
+     * */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {

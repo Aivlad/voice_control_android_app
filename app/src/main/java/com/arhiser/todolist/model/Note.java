@@ -7,24 +7,27 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+// implements Parcelable, чтобы иметь возможность передавать Note м-ду Activity
 @Entity
 public class Note implements Parcelable {
 
     @PrimaryKey(autoGenerate = true)
-    public int uid;
+    public int uid; // id заметки (PK с автогенерацией)
 
     @ColumnInfo(name = "text")
-    public String text;
+    public String text; // содержимое заметки
 
     @ColumnInfo(name = "timestamp")
-    public long timestamp;
+    public long timestamp;  // для упорядочивания: время создания заметки
 
     @ColumnInfo(name = "done")
-    public boolean done;
+    public boolean done;    // состояние сделано / не сделано
 
+    // дефолтный конструктор без параметров
     public Note() {
     }
 
+    //region Equals and HashCode
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -46,7 +49,9 @@ public class Note implements Parcelable {
         result = 31 * result + (done ? 1 : 0);
         return result;
     }
+    //endregion
 
+    //region Created Parcelable
     protected Note(Parcel in) {
         uid = in.readInt();
         text = in.readString();
@@ -78,4 +83,5 @@ public class Note implements Parcelable {
             return new Note[size];
         }
     };
+    //endregion
 }

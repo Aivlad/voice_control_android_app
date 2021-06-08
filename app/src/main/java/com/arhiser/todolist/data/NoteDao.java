@@ -19,7 +19,8 @@ public interface NoteDao {
     List<Note> getAll();
 
     @Query("SELECT * FROM Note")
-    LiveData<List<Note>> getAllLiveData();
+    LiveData<List<Note>> getAllLiveData();  // LiveData - спец. объект на который может подписаться пользовательский интерфейс
+                                            // И каждый раз при изменении LiveData сообщает свои подписчиками обновления
 
     @Query("SELECT * FROM Note WHERE uid IN (:noteIds)")
     List<Note> loadAllByIds(int[] noteIds);
